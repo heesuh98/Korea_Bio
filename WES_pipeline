@@ -1,0 +1,42 @@
+sample=$1
+
+cp /BiO/Education/WES/data/raw_data/${sample}_*.fastq.gz .
+
+/BiO/Education/WES/tools/sickle/sickle pe -t sanger -g -f ${sample}_1.fastq.gz -r ${sample}_2.fastq.gz -o ${sample}-trimmed_1.fastq.gz -p ${sample}-trimmed_2.fastq.gz -s ${sample}-trimmed_3.fastq.gz
+
+
+/BiO/Education/WES/tools/bwa-0.7.17/bwa mem -t 4 -M -R "@RG\tID:BioEdu\tSM:${sample}\tPL:illumina\tLB:WES" /BiO/Education/WES/data/reference/hg19.fasta ${sample}-trimmed_1.fastq.gz ${sample}-trimmed_2.fastq.gz | /BiO/Education/WES/tools/samtools-1.13/bin/samtools view -bS -q 20 - | /BiO/Education/WES/tools/samtools-1.13/bin/samtools sort -m 16000000000 -o ${sample}.sorted.bam
+
+java -Xmx8g -jar /BiO/Education/WES/tools/gatk-4.2.0.0/gatk-package-4.2.0.0-local.jar MarkDuplicates -I ${sample}.sorted.bam -O ${sample}.rmdup.bam -M ${sample}.rmdup.metrics --REMOVE_DUPLICATES true
+
+/BiO/Education/WES/tools/samtools-1.13/samtools index ${sample}.rmdup.bam
+
+java -Xmx8g -jar /BiO/Education/WES/tools/gatk-4.2.0.0/gatk-package-4.2.0.0-local.jar BaseRecalibrator -R /BiO/Education/WES/data/reference/hg19.fasta -I ${sample}.rmdup.bam -L /BiO/Education/WES/data/target/target.bed --known-sites /BiO/Education/WES/data/db/dbSnp151.hg19.vcf.gz --known-sites /BiO/Education/WES/data/db/Mills_and_1000G_gold_standard.indels.hg19.vcf.gz -O ${sample}_recal.data.table
+
+java -Xmx8g -jar /BiO/Education/WES/tools/gatk-4.2.0.0/gatk-package-4.2.0.0-local.jar ApplyBQSR -bqsr ${sample}_recal.data.table -I ${sample}.rmdup.bam -O ${sample}.recal.bam
+
+java -Xmx8g -jar /BiO/Education/WES/tools/GenomeAnalysisTK-3.7/GenomeAnalysisTK.jar -T DepthOfCoverage -R /BiO/Education/WES/data/reference/hg19.fasta -I ${sample}.recal.bam -o ${sample}_target_cov -ct 1 -ct 5 -ct 10 -ct 20 -ct 30 -omitBaseOutput -L /BiO/Education/WES/data/target/target.bed
+
+/BiO/Education/WES/tools/bedtools2/bin/bedtools intersect -wa -a ${sample}.recal.bam -b /BiO/Education/WES/data/target/target.bed > ${sample}.target.bam
+
+/BiO/Education/WES/tools/samtools-1.13/bin/samtools index ${sample}.target.bam
+
+java -Xmx8g -jar /BiO/Education/WES/tools/gatk-4.2.0.0/gatk-package-4.2.0.0-local.jar HaplotypeCaller -R /BiO/Education/WES/data/reference/hg19.fasta -I ${sample}.target.bam -O ${sample}.gatk.vcf
+
+bgzip ${sample}.gatk.vcf
+
+tabix -f -p vcf ${sample}.gatk.vcf.gz
+
+/BiO/Education/WES/tools/bcftools-1.13/bin/bcftools mpileup -f /BiO/Education/WES/data/reference/hg19.fasta ${sample}.target.bam | /BiO/Education/WES/tools/bcftools-1.13/bin/bcftools call -mv -Ov -o ${sample}.samt.vcf
+
+bgzip ${sample}.samt.vcf
+
+tabix -f -p vcf ${sample}.samt.vcf.gz
+
+/BiO/Education/WES/tools/vcftools/bin/vcf-isec -o -n +2 ${sample}.gatk.vcf.gz ${sample}.samt.vcf.gz > ${sample}.consensus.vcf
+
+java -Xmx8g -jar /BiO/Education/WES/tools/gatk-4.2.0.0/gatk-package-4.2.0.0-local.jar VariantFiltration -R /BiO/Education/WES/data/reference/hg19.fasta -O ${sample}.consensus.filt.vcf --variant ${sample}.consensus.vcf --filter-expression 'DP < 10 || FS > 60.0' --filter-name 'LOWQUAL'
+
+cat ${sample}.consensus.filt.vcf | awk -F '\t' '($7!="LOWQUAL") {print}' | bgzip > ${sample}.final.vcf.gz
+
+tabix -f -p vcf ${sample}.final.vcf.gz
