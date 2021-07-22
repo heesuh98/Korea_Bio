@@ -1,0 +1,64 @@
+##RNA_seq_pipeline
+
+mkdir -p BioResource/Reference/
+cp ../BioResource/Reference/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa BioResource/Reference/
+bowtie2-build  BioResource/Reference/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa BioResource/Reference/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa
+samtools faidx BioResource/Reference/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa
+
+mkdir -p BioResource/GeneModel/
+cp ../BioResource/GeneModel/Arabidopsis_thaliana.TAIR10.44.gtf BioResource/GeneModel/
+cat BioResource/GeneModel/Arabidopsis_thaliana.TAIR10.44.gtf | grep -v "protein_coding" > BioResource/GeneModel/Arabidopsis_thaliana.TAIR10.44.mask.gtf
+
+mkdir -p 00.Rawdata/con
+cp ../BioResource/RawData/Root-Control-6h_1.fastq.gz 00.Rawdata/con
+cp ../BioResource/RawData/Root-Control-6h_2.fastq.gz 00.Rawdata/con
+cp ../BioResource/RawData/Root-Control-12h_1.fastq.gz 00.Rawdata/con
+cp ../BioResource/RawData/Root-Control-12h_2.fastq.gz 00.Rawdata/con
+cp ../BioResource/RawData/Root-Control-24h_1.fastq.gz 00.Rawdata/con
+cp ../BioResource/RawData/Root-Control-24h_2.fastq.gz 00.Rawdata/con
+mkdir -p 00.Rawdata/exp
+cp ../BioResource/RawData/Root-PA01-6h_1.fastq.gz 00.Rawdata/exp
+cp ../BioResource/RawData/Root-PA01-6h_2.fastq.gz 00.Rawdata/exp
+cp ../BioResource/RawData/Root-PA01-12h_1.fastq.gz 00.Rawdata/exp
+cp ../BioResource/RawData/Root-PA01-12h_2.fastq.gz 00.Rawdata/exp
+cp ../BioResource/RawData/Root-PA01-24h_1.fastq.gz 00.Rawdata/exp
+cp ../BioResource/RawData/Root-PA01-24h_2.fastq.gz 00.Rawdata/exp
+
+fastqc -f fastq --extract -t 8 00.Rawdata/con/Root-Control-6h_1.fastq.gz
+fastqc -f fastq --extract -t 8 00.Rawdata/con/Root-Control-6h_2.fastq.gz
+fastqc -f fastq --extract -t 8 00.Rawdata/con/Root-Control-12h_1.fastq.gz
+fastqc -f fastq --extract -t 8 00.Rawdata/con/Root-Control-12h_2.fastq.gz
+fastqc -f fastq --extract -t 8 00.Rawdata/con/Root-Control-24h_1.fastq.gz
+fastqc -f fastq --extract -t 8 00.Rawdata/con/Root-Control-24h_2.fastq.gz
+fastqc -f fastq --extract -t 8 00.Rawdata/exp/Root-PA01-6h_1.fastq.gz
+fastqc -f fastq --extract -t 8 00.Rawdata/exp/Root-PA01-6h_2.fastq.gz
+fastqc -f fastq --extract -t 8 00.Rawdata/exp/Root-PA01-12h_1.fastq.gz
+fastqc -f fastq --extract -t 8 00.Rawdata/exp/Root-PA01-12h_2.fastq.gz
+fastqc -f fastq --extract -t 8 00.Rawdata/exp/Root-PA01-24h_1.fastq.gz
+fastqc -f fastq --extract -t 8 00.Rawdata/exp/Root-PA01-24h_2.fastq.gz
+
+mkdir -p 01.Clean/con
+cutadapt -a AGATCGGAAGAGC -A AGATCGGAAGAGC -o 01.Clean/con/Root-Control-6h_1.nonadapt.fq.gz -p 01.Clean/con/Root-Control-6h_2.nonadapt.fq.gz 00.Rawdata/con/Root-Control-6h_1.fastq.gz 00.Rawdata/con/Root-Control-6h_2.fastq.gz
+trimmomatic PE -threads 8 -summary 01.Clean/con/Root-Control-6h.trimmomatic.log 01.Clean/con/Root-Control-6h_1.nonadapt.fq.gz 01.Clean/con/Root-Control-6h_2.nonadapt.fq.gz 01.Clean/con/Root-Control-6h_R1.qt.P.fastq.gz 01.Clean/con/Root-Control-6h_R1.qt.U.fastq.gz 01.Clean/con/Root-Control-6h_R2.qt.P.fastq.gz 01.Clean/con/Root-Control-6h_R2.qt.U.fastq.gz SLIDINGWINDOW:4:15 MINLEN:36
+cutadapt -a AGATCGGAAGAGC -A AGATCGGAAGAGC -o 01.Clean/con/Root-Control-12h_1.nonadapt.fq.gz -p 01.Clean/con/Root-Control-12h_2.nonadapt.fq.gz 00.Rawdata/con/Root-Control-12h_1.fastq.gz 00.Rawdata/con/Root-Control-12h_2.fastq.gz
+trimmomatic PE -threads 8 -summary 01.Clean/con/Root-Control-12h.trimmomatic.log 01.Clean/con/Root-Control-12h_1.nonadapt.fq.gz 01.Clean/con/Root-Control-12h_2.nonadapt.fq.gz 01.Clean/con/Root-Control-12h_R1.qt.P.fastq.gz 01.Clean/con/Root-Control-12h_R1.qt.U.fastq.gz 01.Clean/con/Root-Control-12h_R2.qt.P.fastq.gz 01.Clean/con/Root-Control-12h_R2.qt.U.fastq.gz SLIDINGWINDOW:4:15 MINLEN:36
+cutadapt -a AGATCGGAAGAGC -A AGATCGGAAGAGC -o 01.Clean/con/Root-Control-24h_1.nonadapt.fq.gz -p 01.Clean/con/Root-Control-24h_2.nonadapt.fq.gz 00.Rawdata/con/Root-Control-24h_1.fastq.gz 00.Rawdata/con/Root-Control-24h_2.fastq.gz
+trimmomatic PE -threads 8 -summary 01.Clean/con/Root-Control-24h.trimmomatic.log 01.Clean/con/Root-Control-24h_1.nonadapt.fq.gz 01.Clean/con/Root-Control-24h_2.nonadapt.fq.gz 01.Clean/con/Root-Control-24h_R1.qt.P.fastq.gz 01.Clean/con/Root-Control-24h_R1.qt.U.fastq.gz 01.Clean/con/Root-Control-24h_R2.qt.P.fastq.gz 01.Clean/con/Root-Control-24h_R2.qt.U.fastq.gz SLIDINGWINDOW:4:15 MINLEN:36
+
+mkdir -p 01.Clean/exp
+cutadapt -a AGATCGGAAGAGC -A AGATCGGAAGAGC -o 01.Clean/exp/Root-PA01-6h_1.nonadapt.fq.gz -p 01.Clean/exp/Root-PA01-6h_2.nonadapt.fq.gz 00.Rawdata/exp/Root-PA01-6h_1.fastq.gz 00.Rawdata/exp/Root-PA01-6h_2.fastq.gz
+trimmomatic PE -threads 8 -summary 01.Clean/exp/Root-PA01-6h.trimmomatic.log 01.Clean/exp/Root-PA01-6h_1.nonadapt.fq.gz 01.Clean/exp/Root-PA01-6h_2.nonadapt.fq.gz 01.Clean/exp/Root-PA01-6h_R1.qt.P.fastq.gz 01.Clean/exp/Root-PA01-6h_R1.qt.U.fastq.gz 01.Clean/exp/Root-PA01-6h_R2.qt.P.fastq.gz 01.Clean/exp/Root-PA01-6h_R2.qt.U.fastq.gz SLIDINGWINDOW:4:15 MINLEN:36
+cutadapt -a AGATCGGAAGAGC -A AGATCGGAAGAGC -o 01.Clean/exp/Root-PA01-12h_1.nonadapt.fq.gz -p 01.Clean/exp/Root-PA01-12h_2.nonadapt.fq.gz 00.Rawdata/exp/Root-PA01-12h_1.fastq.gz 00.Rawdata/exp/Root-PA01-12h_2.fastq.gz
+trimmomatic PE -threads 8 -summary 01.Clean/exp/Root-PA01-12h.trimmomatic.log 01.Clean/exp/Root-PA01-12h_1.nonadapt.fq.gz 01.Clean/exp/Root-PA01-12h_2.nonadapt.fq.gz 01.Clean/exp/Root-PA01-12h_R1.qt.P.fastq.gz 01.Clean/exp/Root-PA01-12h_R1.qt.U.fastq.gz 01.Clean/exp/Root-PA01-12h_R2.qt.P.fastq.gz 01.Clean/exp/Root-PA01-12h_R2.qt.U.fastq.gz SLIDINGWINDOW:4:15 MINLEN:36
+cutadapt -a AGATCGGAAGAGC -A AGATCGGAAGAGC -o 01.Clean/exp/Root-PA01-24h_1.nonadapt.fq.gz -p 01.Clean/exp/Root-PA01-24h_2.nonadapt.fq.gz 00.Rawdata/exp/Root-PA01-24h_1.fastq.gz 00.Rawdata/exp/Root-PA01-24h_2.fastq.gz
+trimmomatic PE -threads 8 -summary 01.Clean/exp/Root-PA01-24h.trimmomatic.log 01.Clean/exp/Root-PA01-24h_1.nonadapt.fq.gz 01.Clean/exp/Root-PA01-24h_2.nonadapt.fq.gz 01.Clean/exp/Root-PA01-24h_R1.qt.P.fastq.gz 01.Clean/exp/Root-PA01-24h_R1.qt.U.fastq.gz 01.Clean/exp/Root-PA01-24h_R2.qt.P.fastq.gz 01.Clean/exp/Root-PA01-24h_R2.qt.U.fastq.gz SLIDINGWINDOW:4:15 MINLEN:36
+
+mkdir -p 02.Align/con
+tophat -o 02.Align/con/Root-Control-6h -p 8 -r 250 --mate-std-dev 50 --library-type fr-unstranded -G BioResource/GeneModel/Arabidopsis_thaliana.TAIR10.44.gtf --rg-id control --rg-sample Root-Control-6h BioResource/Reference/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa 01.Clean/con/Root-Control-6h_R1.qt.P.fastq.gz 01.Clean/con/Root-Control-6h_R2.qt.P.fastq.gz
+tophat -o 02.Align/con/Root-Control-12h -p 8 -r 250 --mate-std-dev 50 --library-type fr-unstranded -G BioResource/GeneModel/Arabidopsis_thaliana.TAIR10.44.gtf --rg-id control --rg-sample Root-Control-12h BioResource/Reference/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa 01.Clean/con/Root-Control-12h_R1.qt.P.fastq.gz 01.Clean/con/Root-Control-12h_R2.qt.P.fastq.gz
+tophat -o 02.Align/con/Root-Control-24h -p 8 -r 250 --mate-std-dev 50 --library-type fr-unstranded -G BioResource/GeneModel/Arabidopsis_thaliana.TAIR10.44.gtf --rg-id control --rg-sample Root-Control-24h BioResource/Reference/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa 01.Clean/con/Root-Control-24h_R1.qt.P.fastq.gz 01.Clean/con/Root-Control-24h_R2.qt.P.fastq.gz
+
+mkdir -p 02.Align/exp
+tophat -o 02.Align/exp/Root-PA01-6h -p 8 -r 250 --mate-std-dev 50 --library-type fr-unstranded -G BioResource/GeneModel/Arabidopsis_thaliana.TAIR10.44.gtf --rg-id experiment --rg-sample Root-PA01-6h BioResource/Reference/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa 01.Clean/exp/Root-PA01-6h_R1.qt.P.fastq.gz 01.Clean/exp/Root-PA01-6h_R2.qt.P.fastq.gz
+tophat -o 02.Align/exp/Root-PA01-12h -p 8 -r 250 --mate-std-dev 50 --library-type fr-unstranded -G BioResource/GeneModel/Arabidopsis_thaliana.TAIR10.44.gtf --rg-id experiment --rg-sample Root-PA01-12h BioResource/Reference/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa 01.Clean/exp/Root-PA01-12h_R1.qt.P.fastq.gz 01.Clean/exp/Root-PA01-12h_R2.qt.P.fastq.gz
+tophat -o 02.Align/exp/Root-PA01-24h -p 8 -r 250 --mate-std-dev 50 --library-type fr-unstranded -G BioResource/GeneModel/Arabidopsis_thaliana.TAIR10.44.gtf --rg-id experiment --rg-sample Root-PA01-24h BioResource/Reference/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa 01.Clean/exp/Root-PA01-24h_R1.qt.P.fastq.gz 01.Clean/exp/Root-PA01-24h_R2.qt.P.fastq.gz
