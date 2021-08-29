@@ -1,0 +1,63 @@
+# 패턴객체 만들기
+import re
+
+p = re.compile("[a-z]+")  # complie로 패턴객체 만들기
+
+# 패턴객체
+import re
+
+p = re.compile("[a-z]+")
+dir(p)
+
+# 패턴객체
+import re
+
+p = re.compile("[a-z]+")
+
+m = p.match("python")
+print(m)
+
+m = p.match("3 python")  # 문자열의 처음부터 정규식과 매치되는지 조사
+print(m)
+
+m = p.search("python")
+print(m)
+
+m = p.search("3 python")
+print(m)
+
+result = p.findall("life is too short")  # 빈칸은 찾으라고 안해서 끊긴다
+print(result)
+
+result = p.finditer("life is too short")
+print(result)
+
+for r in result:
+    print(r)
+
+#############
+import re
+
+p = re.compile("[a-z]+")
+
+###########
+# 컴파일 옵션
+import re
+
+p = re.comile("a,b")
+m = p.match("a\nb")
+print(re.m)
+
+p = re.comile("a.b", re.DOTALL)
+m = p.match("a\nb")
+print(m)
+
+##########
+# multiline, M
+# ^는 문자열 처음 시작을 의미하고, $는 문자열 마지막을 의미한다.
+import re
+
+p = re.compile("^python\s\w+")
+
+data = """python one
+lie is too short"""
